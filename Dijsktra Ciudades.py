@@ -1,99 +1,150 @@
-def dijsktra(ruta, inicio, destino):
+import networkx as nx
+import matplotlib.pyplot as plt
 
-    camino_corto = {inicio: (None, 0)}
-    ubicacion = inicio
-    ya_Recorrido = set()
+class Dijsktra:
+    # rutas = {
+    #     'A':{'D':5, 'E':4, 'B':8},
+    #     'B':{'A':8, 'E':12, 'F':4, 'C':3},
+    #     'C':{'B':3, 'F':9, 'G':11},
+    #     'D':{'A':5, 'H':6, 'E':9},
+    #     'E':{'D':9, 'A':4, 'B':12, 'F':3, 'J':5, 'I':8},
+    #     'F':{'B':4, 'C':9, 'E':3, 'G':1, 'K':8},
+    #     'G':{'C':11, 'F':1, 'L':7, 'K':8},
+    #     'H':{'D':6, 'I':2, 'M':7},
+    #     'I':{'E':8, 'M':6, 'H':2, 'J':10},
+    #     'J':{'I':10, 'E':5, 'K':6,'N':9},
+    #     'K':{'F':8, 'G':8, 'J':6, 'L':5, 'P':7},
+    #     'L':{'G':7, 'K':5, 'P':6},
+    #     'M':{'H':7, 'I':6, 'N':2},
+    #     'N':{'J':9, 'M':2, 'P':12},
+    #     'P':{'K':7, 'L':6, 'N':12}
+
+    # }
+    rutas = {
+        'Arad': {'Zerind': 75, 'Sibiu': 140, 'Timisoara': 118},
+        'Zerind': {'Oradea': 71, 'Oradea': 71},
+        'Oradea': {'Sibiu': 151, 'Zerind': 71},
+        'Timisoara': {'Lugoj': 111, 'Arad': 118},
+        'Lugoj': {'Mehadia': 70, 'Timisoara': 111},
+        'Mehadia': {'Lugoj': 70, 'Dobreta': 75},
+        'Dobreta': {'Mehadia': 75, 'Craiova': 120},
+        'Craiova': {'RimnicuVilcea': 146, 'Pitesti': 138, 'Dobreta': 120},
+        'RimnicuVilcea': {'Pitesti': 97, 'Craiova': 146},
+        'Sibiu': {'Arad': 140, 'Fagaras': 99, 'RimnicuVilcea': 80},
+        'Fagaras': {'Sibiu': 99, 'Bucharest': 211},
+        'Pitesti': {'RimnicuVilcea': 97, 'Craiova': 138, 'Bucharest': 101},
+        'Bucharest': {'Fagaras': 211, 'Giurgiu': 90, 'Pitesti': 101, 'Urziceni': 85},
+        'Giurgiu': {'Bucharest': 90},
+        'Urziceni': {'Bucharest': 85, 'Hirsova': 98, 'Vaslui': 142},
+        'Hirsova': {'Urziceni': 98, 'Eforie': 86},
+        'Eforie': {'Hirsova': 86},
+        'Vaslui': {'Urziceni': 142, 'Iasi': 92},
+        'Iasi': {'Vaslui': 92, 'Neamt': 87},
+        'Neamt': {'Iasi': 87}
+    }
+
+    def __init__(self):
+        self.camino_corto = None
+        
+    def setOrigen(self, origen):
+        self.origen = origen
     
-    while ubicacion != destino:
-        # Adición de la ubicación actual al conjunto de ubicaciones que ya se han visitado.
-        ya_Recorrido.add(ubicacion)
-        destinos = ruta.get(ubicacion, [])
-        # Itera sobre todos los nodos que están conectados al nodo actual. comprueba si ya ha sido visitado
-        # para saltarlo. Si no, calcula el nuevo peso de la ruta a ese nodo 
-        for siguiente_nodo, weight in destinos:
-            if siguiente_nodo in ya_Recorrido:
-                continue
-            nueva_distancia = camino_corto[ubicacion][1] + weight
-            if siguiente_nodo not in camino_corto or nueva_distancia < camino_corto[inicio][1]:
-                camino_corto[siguiente_nodo] = (ubicacion, nueva_distancia)
+    def setDestino(self, destino):
+        self.destino = destino
+    
+    def busqueda(self):
+        self.camino_corto = {self.origen: (None, 0)}
+        ubicacion = self.origen
+        ya_Recorrido = set()
+        # Comprobando si la ubicación actual es el destino.
+        while ubicacion != self.destino:
+            for vecino, peso in self.rutas[ubicacion].items():
+                if vecino not in ya_Recorrido:
+                    costo = self.camino_corto[ubicacion][1] + peso
+                    # Si el costo del vecino es menor que el costo del nodo actual, entonces actualiza el costo del nodo actual
+                    if vecino not in self.camino_corto or costo < self.camino_corto[vecino][1]:
+                        # actualizando la ruta más corta.
+                        self.camino_corto[vecino] = (ubicacion, costo)
+            ya_Recorrido.add(ubicacion)
+            menor_costo = float("inf")
+            for nodo in self.camino_corto:
+                if nodo not in ya_Recorrido:
+                    # encontrar el nodo que no se ha visitado, con el costo más bajo del nodo actual.
+                    if self.camino_corto[nodo][1] < menor_costo:
+                        menor_costo = self.camino_corto[nodo][1]
+                        ubicacion = nodo
 
-        # Creación de un diccionario con las ubicaciones que no están en el conjunto `ya_Recorrido`.
-        siguiente_ubicacion = {nodo: camino_corto[nodo] for nodo in camino_corto if nodo not in ya_Recorrido}
-        if not siguiente_ubicacion:
-            return "No se puede hacer esta ruta! :("
-        #Seleccionar el nodo con menor peso
-        ubicacion = min(siguiente_ubicacion, key=lambda k: siguiente_ubicacion[k][1])
+        return self.camino_corto[self.destino][1], self.getCamino()
+        
+    def getCamino(self):
+        camino = []
+        while self.destino != None:
+            camino.append(self.destino)
+            self.destino = self.camino_corto[self.destino][0]
+        camino.reverse()
+        return camino
 
-    # Guardar el camino mas corto
-    mejor_camino = []
-    while ubicacion is not None:
-        mejor_camino.append(ubicacion)
-        siguiente_nodo = camino_corto[ubicacion][0]
-        ubicacion = siguiente_nodo
-       
-    # Invertir la lista.
-    mejor_camino = mejor_camino[::-1]
-    print("Distancia: ",str(camino_corto[destino][1]))
-    return mejor_camino
+    #funcion que dibuja el grafo, coloreando los nodos según el camino más corto.
+    def dibujar(self, camino):
+        G = nx.Graph()
+        G.add_nodes_from(self.rutas.keys())
+        for nodo, vecinos in self.rutas.items():
+            for vecino, peso in vecinos.items():
+                G.add_edge(nodo, vecino, w=peso)
+        pos = nx.spring_layout(G)
+        nodos = list(G.nodes())
+        
+        color = ['red' if nodo in camino else 'blue' for nodo in nodos]
+        color_edge = ['green' if nodo in camino else 'gray' for nodo in nodos]
+        nx.draw(G, pos, node_color=color, edge_color=color_edge, node_size=1700, node_shape='H', with_labels=True)
+               
+        nx.draw_networkx_edge_labels(G, pos, font_size=7, font_family='Calibri', font_color='black')
+        plt.axis('on')
+        plt.show()
 
 def main():
-    ruta = {}
-    ruta["Arad"] = [("Zerind",75), ("Sibiu",140), ("Timisoara",118)]
-    ruta["Zerind"] = [("Arad",75), ("Oradea",71)]
-    ruta["Oradea"] = [("Zerind",71), ("Sibiu",151)]
-    ruta["Timisoara"] = [("Arad",118), ("Lugoj",111)]
-    ruta["Lugoj"] = [("Timisoara",111), ("Mehadia",70)]
-    ruta["Mehadia"] = [("Lugoj",70), ("Dobreta",75)]
-    ruta["Dobreta"] = [("Mehadia",75), ("Craicova",120)]
-    ruta["Craicova"] = [("Dobreta",120), ("Rimnicu Vilcea",146), ("Pitesti",138)]
-    ruta["Rimnicu Vilcea"] = [("Sibiu",80), ("Pitesti",97), ("Craicova",146)]
-    ruta["Sibiu"] = [("Arad",140), ("Oradea",151), ("Fagaras",99), ("Rimnicu Vilcea",80)]
-    ruta["Fagaras"] = [("Sibiu",99), ("Bucharest",211)]
-    ruta["Pitesti"] = [("Rimnicu Vilcea",97), ("Bucharest",101), ("Craicova",138)]
-    ruta["Bucharest"] = [("Pitesti",101), ("Fagaras",211), ("Urziceni",85), ("Giurgiu",90)]
-    ruta["Giurgiu"] = [("Bucharest",90)]
-    ruta["Urziceni"] = [("Bucharest",85), ("Hirsova",98), ("Vaslui",142)]
-    ruta["Hirsova"] = [("Urziceni",98), ("Eforie",86)]
-    ruta["Eforie"] = [("Hirsova",86)]
-    ruta["Vaslui"] = [("Urziceni",142), ("Iasi",92)]
-    ruta["Iasi"] = [("Vaslui",92), ("Neamt",87)]
-    ruta["Neamt"] = [("Iasi",87)]
+    
     continuar = "Y"
     while continuar == "Y" or continuar == "y":
+        dijsktra = Dijsktra()
         print("\n") 
         print("Bienvenido a la aplicacion de Dijsktra")
-        print("#"*100)
-        print(sorted(ruta.keys()))
-        print("#"*100)
-        
-        inicio = input("Ingrese el nombre de la ciudad de origen: ")
-        destino = input("Ingrese el nombre de la ciudad de destino: ")
-        
+        print("#"*50)
+        for key in dijsktra.rutas: 
+            print(key)
+        print("#"*50)
+        origen = input("Ingrese el origen: ")
+        destino = input("Ingrese el destino: ")
 
-        if inicio not in ruta or destino not in ruta:
+        if origen not in dijsktra.rutas.keys() or destino not in dijsktra.rutas.keys():
             print("*"*40)
-            print("La ciudad no existe!")
+            print("El origen o destino que ingreso no existe!!!")
             print("*"*40)
-            continue
-        elif inicio == destino:
-            print("-"*60)
-            print("La ciudad de origen es igual a la ciudad de destino!")
-            print("-"*60)
+        elif origen == destino:
+            print("*"*40)
+            print("El origen y destino son iguales!")
+            print("*"*40)
         else:
-            camino = dijsktra(ruta, inicio, destino)
-            print("="*80)
-            print("El camino mas corto es: ", camino)
-            print("\n")
-            print("="*80)
-                      
-        continuar = input("Desea continuar? (Y/N) ")
-        
-       
+            
+            dijsktra.setOrigen(origen)
+            print("El origen es: ", dijsktra.origen)
+            dijsktra.setDestino(destino)
+            print("El destino es: ", dijsktra.destino)
+            costo, camino = dijsktra.busqueda()
+            
+            print("*"*40)
+            print(f"El mejor camino de {camino[0]} a {camino[-1]} es: ")
+            print("El costo del camino es: ", costo)
+            print("El camino es: ", camino)
+            print("*"*40)
+            dijsktra.dibujar(camino)
+        continuar = input("Desea continuar? (Y/N): ")
 
-if __name__ == "__main__":
-    main()
-  
+    print("*"*40)
+    print("Gracias por usar la aplicacion!")
+    print("*"*40)
 
     
-
-   
+if __name__ == '__main__':
+    main()
+    
